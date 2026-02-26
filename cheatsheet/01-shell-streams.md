@@ -1,44 +1,73 @@
-# 01 — Shell + streams (stdin/stdout/stderr)
+# Cheatsheet 01: Shell + Streams (stdin/stdout/stderr) — QA Linux
 
-## Идея
-Почти любая команда в Linux работает с тремя стандартными потоками:
-- stdin (0): вход
-- stdout (1): “нормальный” вывод
-- stderr (2): ошибки/диагностика
+Цель: быстро понимать shell и потоки, чтобы диагностировать проблемы на Ubuntu-сервере по SSH.
 
-QA-польза: можно собирать артефакты (логи, отчёты), отделять ошибки от результата, строить цепочки команд.
+---
 
-## Быстрые команды
-Папка для лабораторных:
-- mkdir -p ~/lab1_streams && cd ~/lab1_streams
+## 1) Терминал, shell, сессия
+- Терминал — интерфейс (окно/ssh-клиент), через который ты общаешься с shell.
+- Shell (обычно bash) — запускает процессы и связывает потоки.
+- Каждое SSH-подключение = отдельная сессия.
 
-Проверка текущего места:
-- pwd
-- ls -lah
+Быстрые проверки:
+~~~bash
+whoami
+id
+pwd
+tty
+echo "$SHELL"
+echo "$0"
+~~~
 
-stdout в файл (перезапись):
-- echo "hello" > out.txt
+---
 
-stdout в файл (дописать):
-- echo "one more line" >> out.txt
+## 2) Стандартные потоки
+- stdin (0) — ввод
+- stdout (1) — обычный вывод
+- stderr (2) — ошибки
 
-stderr в файл:
-- ls no_such_file 2> err.txt
+---
 
-stdout + stderr в один файл (правильный порядок):
-- cmd > all.txt 2>&1
+## 3) Редиректы (самое нужное)
+~~~bash
+cmd > out.txt
+cmd >> out.txt
+cmd 2> err.txt
+cmd > all.txt 2>&1
+cmd &> all.txt
+~~~
 
-Важная ловушка (порядок редиректов):
-- cmd 2>&1 > all.txt   # stderr останется в терминале, stdout уйдёт в файл
+---
 
-Посмотреть файлы:
-- cat out.txt
-- cat err.txt
-- cat all.txt
+## 4) Пайпы (|)
+Пайп соединяет stdout одной команды со stdin другой.
 
-## Мини-памятка по ключам
-- mkdir -p: создать путь целиком и не ругаться, если директория уже существует.
-- >: перезаписать файл.
-- >>: дописать в конец.
-- 2>: перенаправить stderr.
-- 2>&1: направить stderr туда же, куда уже направлен stdout.
+~~~bash
+grep ssh /var/log/auth.log | tail -n 20
+~~~
+
+---
+
+## 5) QA-паттерны (копипаст)
+Последние SSH-события:
+~~~bash
+sudo tail -n 200 /var/log/auth.log | grep -i ssh | tail -n 50
+~~~
+
+Stdout и stderr отдельно:
+~~~bash
+some_command > out.log 2> err.log
+~~~
+
+Оба потока в один файл:
+~~~bash
+some_command > all.log 2>&1
+~~~
+
+---
+
+## 6) Мини-проверка (1 мин)
+~~~bash
+( echo "OUT"; echo "ERR" >&2 ) > out.txt 2>&1
+cat out.txt
+~~~

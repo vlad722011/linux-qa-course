@@ -18,6 +18,7 @@
 - `guide/03-pipes.md` — пайпы и обработка текста для логов.
 - `guide/04-journalctl-ssh.md` — journalctl и SSH-диагностика под Ubuntu 24.04.
 - `guide/05-shell-env.md` — окружение: переменные, PATH, export, .bashrc vs .profile.
+- `guide/05a-path-and-profiles-real-session.md` — разбор реальной сессии: PATH, профили, clean vs login.
 
 ## Правило обучения
 1) Прочитал идею (guide).

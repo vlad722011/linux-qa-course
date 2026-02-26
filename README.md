@@ -11,11 +11,13 @@
 ### Cheatsheet
 - `cheatsheet/01-shell-streams.md` — терминал, shell, stdin/stdout/stderr, редиректы.
 - `cheatsheet/02-pipes-redirects.md` — пайпы и редиректы, быстрые цепочки для логов.
+- `cheatsheet/03-shell-env.md` — env, PATH, export (почему в CI иначе).
 
 ### Guide
 - `guide/01-shell-streams.md` — подробно про shell и потоки + практика и задания.
 - `guide/03-pipes.md` — пайпы и обработка текста для логов.
 - `guide/04-journalctl-ssh.md` — journalctl и SSH-диагностика под Ubuntu 24.04.
+- `guide/05-shell-env.md` — окружение: переменные, PATH, export, .bashrc vs .profile.
 
 ## Правило обучения
 1) Прочитал идею (guide).
@@ -24,4 +26,4 @@
 4) Разобрал мини-инцидент (как на работе).
 
 ## Дальше по курсу
-Следующая большая тема: Глава 4 — Shell и окружение (переменные, export, rc-файлы, скрипты).
+Следующая большая тема: процессы и управление ими (ps/top/jobs/kill/lsof) + практические “инциденты”.

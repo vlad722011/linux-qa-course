@@ -1,14 +1,46 @@
-# Processes
+# Cheatsheet 06: Processes (ps/kill/jobs) — QA
 
+Цель: находить/убивать зависшие процессы, понимать статусы (D/R/S/Z), управлять фоновыми задачами.
 
-ps aux # все процессы
-top/htop # мониторинг
-pgrep nginx # PID по имени
+---
 
-sleep 300 & # фон
-jobs # список
-fg %1 # передний план
-Ctrl+Z # остановить
+## 1) Список процессов
+~~~bash
+**ps aux**          # все процессы (USER/PID/%CPU/%MEM)
+**ps -ef**          # дерево процессов (PPID)
+**pgrep** nginx     # PID по имени
+**pkill** nginx     # убить по имени
+~~~
 
-kill PID # SIGTERM
-kill -9 PID # SIGKILL
+**top/htop** — интерактивный мониторинг (q=выход)
+
+---
+
+## 2) Job Control (фон)
+~~~bash
+sleep 300 **&**     # запуск в фон
+**jobs**            # список задач shell'а
+**fg %1**           # вернуть на передний план
+**Ctrl+Z**          # **приостановить** (STOP)
+**bg %1**           # продолжить в фоне
+~~~
+
+---
+
+## 3) Сигналы (kill)
+~~~bash
+**kill PID**        # SIGTERM (аккуратно)
+**kill -9 PID**     # SIGKILL (принудительно)  
+**kill -STOP PID**  # приостановить
+**kill -CONT PID**  # продолжить
+~~~
+
+**QA-tip:** Сначала TERM (15), потом KILL (9). `jobs` видит только свои задачи.
+
+---
+
+## 4) Диагностика
+~~~bash
+**ps -o** pid,ppid,stat,cmd **-C** sleep   # конкретный процесс
+**kill -l**                               # список сигналов
+~~~

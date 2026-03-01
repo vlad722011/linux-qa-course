@@ -1,94 +1,74 @@
-Guide 02: Файлы и inode — почему "удалил файл, а место не освободилось"
-Цель главы
-После этой главы ты должен уметь:
-Разобрать ls -l по частям (права, inode, link count)
-Создать/проверить hard link vs sym link
-Найти "призрачные" файлы через lsof +L1
-Починить права доступа для QA-скриптов
+# Guide 02: Файлы и inode — реальный разбор (QA)
 
-1) Файл в Linux = inode + данные
-Имя файла = ссылка на inode в каталоге
-inode содержит: тип, права, владелец, link count, даты, блоки данных
+---
 
-Практика (на VPS)
-ls -li /etc/passwd
-stat /etc/passwd
-ls -l /etc/passwd
+## 1) Что такое inode простыми словами
+**inode** — это "паспорт" файла на диске. Содержит метаданные: размер, права, timestamps, **но НЕ ИМЯ**.
 
-2) Разбор ls -l (тренировка чтения)
--rw-r--r-- 2 vlad vlad 1024 Mar 1 file.txt
-││  │  │ │ │    │  │   └─дата+имя
-││  │  │ │ │    │  └────размер
-││  │  │ │ └─────группа
-││  │  │ └──────владелец
-││  │  └────────link count
-││  └───────────права остальных
-│└─────────────права группы
-└──────────────права user + тип
+Один inode = один набор метаданных. Несколько имён (hard links) могут указывать на один inode.
 
-Практика
-touch ~/test-rights.txt
-ls -l ~/test-rights.txt
-chmod 644 ~/test-rights.txt
-ls -l ~/test-rights.txt
-rm ~/test-rights.txt
+---
 
-3) Hard link vs Sym link
-Hard link = ещё одно ИМЯ для ТОГО ЖЕ inode
-Sym link = отдельный inode с путём к файлу
+## 2) Показать inode командой
+~~~bash
+**ls -i** file.txt      # inode номер файла
+**ls -i** /etc/passwd  # системный файл
+**stat** file.txt      # все метаданные (включая inode)
+~~~
 
-Практика (обязательно!)
-mkdir ~/inode-lab
-cd ~/inode-lab
-echo "QA данные" > original.txt
-ln original.txt hard.txt
-ln -s original.txt sym.txt
-ls -li
-rm original.txt
-ls -li
-cat hard.txt
-cat sym.txt
-cd ..
-rm -rf ~/inode-lab
+---
 
-4) "Диск полный, файлов нет" — классика QA
-rm file.txt НЕ удаляет inode полностью!
-inode живёт, если: другие hard link ИЛИ процесс держит открытым
+## 3) Демо: создай hard link и увидишь
+~~~bash
+echo "test" > file1.txt
+ln file1.txt file2.txt      # hard link (один inode)
 
-Диагностика
-df -h
-du -sh /*
-lsof +L1
-lsof | grep deleted
+ls -li file1.txt file2.txt  # одинаковые i-node номера!
+stat file1.txt file2.txt    # одинаковые метаданные
+~~~
 
-5) QA-кейс: освободить диск на CI
-mkdir ~/disk-check
-cd ~/disk-check
-echo "== Диагностика диска ==" > disk-report.txt
-echo "df -h:" >> disk-report.txt
-df -h >> disk-report.txt 2>/dev/null
-echo "Призраки:" >> disk-report.txt  
-lsof +L1 | head -10 >> disk-report.txt
-ls -lah disk-report.txt
-cat disk-report.txt
+**Важно:** `rm file1.txt` не удалит данные — `file2.txt` держит inode живым.
 
-6) Задания (с проверкой)
-Создай original.txt
-ln original.txt hard.txt → ls -li (одинаковый inode)
-ln -s original.txt sym.txt → ls -li (разный inode)  
-rm original.txt
-cat hard.txt (работает!)
-cat sym.txt (ошибка!)
+---
 
-7) Мини-инцидент (как на работе)
-Симптом: "CI: No space left on device", df -h = 100%
-Выполни:
-df -h /
-du -sh /var/log/* | sort -hr | head -3
-lsof +L1 | head -5 > ghosts.log
-cat ghosts.log
+## 4) Soft link (symlink) vs hard link
+### 4.1 Hard link (ln)
+~~~bash
+ln orig.txt copy.txt    # тот же inode
+ls -li orig.txt copy.txt  # одинаковые номера
+~~~
 
-Гипотезы:
-1. Логгер держит удалённый /var/log/app.log
-2. CI-раннеры держат temp файлы
-Решение: kill PID из lsof
+### 4.2 Soft link (ln -s)
+~~~bash
+ln -s orig.txt link.txt  # **отдельный** inode, указывает на имя
+ls -li orig.txt link.txt # **разные** inode!
+ls -lF link.txt          # l@ -> orig.txt
+~~~
+
+**rm orig.txt** → **hard link** живёт, **symlink** ломается (dangling).
+
+---
+
+## 5) Диагностика: inode помогает найти дубли
+~~~bash
+# Найти все файлы с inode 123456
+find /path -inum 123456
+
+# Два имени → один файл (экономия места)
+ls -li /var/log/syslog /var/log/syslog.1  # часто одинаковые inode
+~~~
+
+---
+
+## 6) Практика: найди утечки места (QA-кейс)
+Сценарий: `df -h` показывает место, `du -sh *` — меньше.
+
+**Причина:** удалённый файл держится открытым процессом (inode живёт).
+
+~~~bash
+echo "big" > bigfile && sleep 3600 < bigfile &  # держим открытым
+rm bigfile                                      # файл удалён с ls
+lsof | grep deleted                             # inode живёт!
+kill %1                                         # освободим место
+~~~
+

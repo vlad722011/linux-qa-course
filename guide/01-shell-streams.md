@@ -1,11 +1,10 @@
-=======
 # Guide 01: Shell и потоки (stdin/stdout/stderr) — реальный разбор (QA)
->>>>>>> f46d906 (Guide 01: shell, sessions и потоки (stdin/stdout/stderr) в QA-стиле)
+
+ Guide 01: shell, sessions и потоки (stdin/stdout/stderr) в QA-стиле)
 
 1) Почему Linux и зачем он QA-инженеру
 Linux — это свободная, многопользовательская и многозадачная операционная система с открытым исходным кодом.
 
-<<<<<<< HEAD
 Linux используется:
 • на серверах и VPS
 • в CI/CD
@@ -45,9 +44,8 @@ Shell — это программа (обычно bash), которая:
 
 Каждое SSH-подключение = новая сессия
 
-Практика (выполни)
-=======
 ## 1) Терминал, shell и сессия
+
 **Терминал** — окно, SSH-клиент или вкладка IDE для общения с shell.  
 **Shell** (обычно bash) — программа, которая:
 • читает команду  
@@ -65,25 +63,21 @@ Shell — это программа (обычно bash), которая:
 ---
 
 ## 2) Практика: проверить сессию
+
 ~~~bash
->>>>>>> f46d906 (Guide 01: shell, sessions и потоки (stdin/stdout/stderr) в QA-стиле)
 whoami
 pwd
 tty
 echo "$SHELL"
 ps
-<<<<<<< HEAD
-=======
 who
 w
 ~~~
->>>>>>> f46d906 (Guide 01: shell, sessions и потоки (stdin/stdout/stderr) в QA-стиле)
 
 3) Процессы: что реально происходит при вводе команды
 Когда ты вводишь команду:
 ls -l
 
-<<<<<<< HEAD
 Shell:
 • создаёт процесс ls
 • подключает stdin/stdout/stderr
@@ -98,22 +92,23 @@ Shell:
 
 stdin (0) — вход
 обычно клавиатура или данные от другой команды
-=======
+
 ## 3) Потоки данных
+
 У процесса есть 3 стандартных потока:  
 **stdin (0)** — вход (клавиатура или другой процесс)  
 **stdout (1)** — обычный вывод  
 **stderr (2)** — ошибки  
 
 QA-почему важно:  
+
 • В CI stdout и stderr могут идти отдельно  
 • Можно сохранять ошибки отдельно для анализа
->>>>>>> f46d906 (Guide 01: shell, sessions и потоки (stdin/stdout/stderr) в QA-стиле)
+
 
 stdout (1) — обычный вывод
 то, что команда “печатает”
 
-<<<<<<< HEAD
 stderr (2) — ошибки
 диагностика и сообщения об ошибках
 
@@ -127,33 +122,24 @@ shell всегда управляет потоками
 
 5) Редиректы — перенаправление потоков
 stdout в файл
-=======
+
 ## 4) Редиректы
+
 stdout в файл:
 ~~~bash
->>>>>>> f46d906 (Guide 01: shell, sessions и потоки (stdin/stdout/stderr) в QA-стиле)
 echo "hello" > out.txt
 echo "world" >> out.txt
 cat out.txt
 
-<<<<<<< HEAD
-stderr в файл
-=======
 stderr в файл:
 ~~~bash
->>>>>>> f46d906 (Guide 01: shell, sessions и потоки (stdin/stdout/stderr) в QA-стиле)
 ls /no_such_dir 2> err.txt
 cat err.txt
 
-<<<<<<< HEAD
-stdout + stderr в один файл
-=======
-stdout + stderr вместе:
+stdout + stderr в один файл:
 ~~~bash
->>>>>>> f46d906 (Guide 01: shell, sessions и потоки (stdin/stdout/stderr) в QA-стиле)
 ls /tmp /no_such_dir > all.txt 2>&1
 
-<<<<<<< HEAD
 ВАЖНО:
 shell обрабатывает редиректы слева направо
 поэтому порядок имеет значение
@@ -161,24 +147,12 @@ shell обрабатывает редиректы слева направо
 Сокращение bash:
 ls /tmp /no_such_dir &> all.txt
 (может не работать в /bin/sh)
-=======
+
 **Важно:** порядок редиректов слева направо  
 **Сокращение bash:** &> all.txt (не в /bin/sh)
->>>>>>> f46d906 (Guide 01: shell, sessions и потоки (stdin/stdout/stderr) в QA-стиле)
 
-6) Пайпы — соединение команд
-Пайп соединяет stdout одной команды со stdin другой
-
-<<<<<<< HEAD
-Пример:
-cat /var/log/syslog | grep ssh | tail -n 20
-
-Что происходит:
-• cat читает файл → stdout
-• grep фильтрует поток
-• tail берёт последние строки
-=======
 ## 5) Пайпы (|)
+
 Соединяем stdout одной команды с stdin другой.
 
 Пример:
@@ -194,6 +168,7 @@ cat /var/log/syslog | grep ssh | tail -n 20
 ---
 
 ## 6) Базовые команды
+
 pwd        — показать текущий каталог  
 cd         — переход в каталог (.., -)  
 ls         — показать содержимое (-l, -a, -h, -R)  
@@ -207,93 +182,39 @@ ls -lah
 pwd
 echo "Hello Linux"
 ~~~
->>>>>>> f46d906 (Guide 01: shell, sessions и потоки (stdin/stdout/stderr) в QA-стиле)
-
 Это цепочка процессов, а не одна команда
 
-<<<<<<< HEAD
-7) Базовые команды Linux
-pwd        — текущий каталог
-cd         — переход по каталогам
-ls         — список файлов
-echo       — вывод текста
-man        — справка по команде
 
-Практика
-cd /home
-ls -lah
-pwd
-echo "Hello Linux"
-
-8) QA-кейс: сбор диагностики без GUI
-Задача: сохранить stdout и stderr в разные файлы
-
-mkdir ~/qa-diag
-cd ~/qa-diag
-
-=======
 ## 7) QA-кейс: собрать диагностику
+
 ~~~bash
 mkdir -p ~/qa-diag
 cd ~/qa-diag
->>>>>>> f46d906 (Guide 01: shell, sessions и потоки (stdin/stdout/stderr) в QA-стиле)
 ( echo "== DATE =="; date;
   echo "== UPTIME =="; uptime;
   echo "== DISK =="; df -h ) > out.log 2> err.log
 ls -lah
 cat out.log
 cat err.log
-<<<<<<< HEAD
-=======
-~~~
->>>>>>> f46d906 (Guide 01: shell, sessions и потоки (stdin/stdout/stderr) в QA-стиле)
-
-9) Задания (выполни обязательно)
-1. Раздели stdout и stderr:
-ls /tmp /no_such_dir > out.txt 2> err.txt
-
-<<<<<<< HEAD
-2. Собери stdout + stderr в один файл и объясни порядок редиректов
-
-3. Собери файл failed_ssh.log:
-=======
-## 8) Задания
-1) Разделить stdout и stderr:
-~~~bash
-ls /tmp /no_such_dir > out.txt 2> err.txt
 ~~~
 
-2) Объединить stdout+stderr:
-~~~bash
+## 8) Примеры для практики
+
+1. Разделить stdout и stderr: 
+
+ls /tmp /no_such_dir > out.txt 2> err.txt
+
+2. Объединить stdout+stderr:
+
 ls /tmp /no_such_dir > all.txt 2>&1
-~~~
 
-3) Сохранить ошибки SSH:
-~~~bash
->>>>>>> f46d906 (Guide 01: shell, sessions и потоки (stdin/stdout/stderr) в QA-стиле)
+3. Сохранить ошибки SSH:
+
 sudo grep "Failed" /var/log/auth.log | tail -n 50 > failed_ssh.log
 
-10) Мини-инцидент (как на работе)
-Симптом:
-CI упал, в логе только "Command failed"
 
-<<<<<<< HEAD
-Действия:
-• запусти команду с редиректом stderr в файл
-• приложи err.log к тикету
-• по err.log выдвини гипотезы:
-  - нет прав
-  - отсутствует файл
-  - проблемы с сетью
-
-Итог главы
-• Linux — инструмент, shell — язык
-• Команды = процессы
-• stdin/stdout/stderr — основа диагностики
-• Редиректы и пайпы — ключ к анализу логов
-• Для QA это базовый навык работы с CI и серверами
-=======
 ## 9) Мини-инцидент
+
 Симптом: “CI упал, в логе только Command failed”  
 
 Действия:
@@ -304,9 +225,10 @@ CI упал, в логе только "Command failed"
 ---
 
 ## Итог
+
 • Linux — инструмент, shell — язык  
 • Команды = процессы + потоки  
 • stdin/stdout/stderr — основа диагностики  
 • Редиректы и пайпы — ключ к анализу логов  
 • Для QA — базовый навык работы с CI и серверами
->>>>>>> f46d906 (Guide 01: shell, sessions и потоки (stdin/stdout/stderr) в QA-стиле)
+

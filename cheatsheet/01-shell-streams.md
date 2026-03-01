@@ -1,73 +1,89 @@
-# Cheatsheet 01: Shell + Streams (stdin/stdout/stderr) — QA Linux
-
-Цель: быстро понимать shell и потоки, чтобы диагностировать проблемы на Ubuntu-сервере по SSH.
+# CheatSheet 01: Shell и потоки (stdin/stdout/stderr) — быстрый взгляд (QA)
 
 ---
 
-## 1) Терминал, shell, сессия
-- Терминал — интерфейс (окно/ssh-клиент), через который ты общаешься с shell.
-- Shell (обычно bash) — запускает процессы и связывает потоки.
-- Каждое SSH-подключение = отдельная сессия.
+## Терминал и shell
+- Терминал = окно/SSH-клиент/IDE  
+- Shell (bash) = читает команды, создаёт процессы, управляет stdin/stdout/stderr, возвращает exit code  
+- Сессия = отдельное подключение с каталогом, переменными и процессами
 
-Быстрые проверки:
+---
+
+## Основные команды сессии
 ~~~bash
-whoami
-id
-pwd
-tty
-echo "$SHELL"
-echo "$0"
-~~~
-
----
-
-## 2) Стандартные потоки
-- stdin (0) — ввод
-- stdout (1) — обычный вывод
-- stderr (2) — ошибки
-
----
-
-## 3) Редиректы (самое нужное)
-~~~bash
-cmd > out.txt
-cmd >> out.txt
-cmd 2> err.txt
-cmd > all.txt 2>&1
-cmd &> all.txt
+whoami       # имя пользователя
+pwd          # текущий каталог
+tty          # терминальное устройство
+echo "$SHELL" # используемый shell
+ps           # процессы текущей сессии
+who / w      # кто подключён, что делает
 ~~~
 
 ---
 
-## 4) Пайпы (|)
-Пайп соединяет stdout одной команды со stdin другой.
+## Потоки данных
+| Поток  | Описание |
+|--------|----------|
+| stdin  | вход (клавиатура/другая команда) |
+| stdout | обычный вывод |
+| stderr | ошибки и диагностика |
 
+**QA:** stderr отдельно → удобнее искать ошибки в CI
+
+---
+
+## Редиректы
 ~~~bash
-grep ssh /var/log/auth.log | tail -n 20
+# stdout → файл
+echo "text" > out.txt
+
+# stderr → файл
+ls /no_such_dir 2> err.txt
+
+# stdout+stderr → один файл
+ls /tmp /no_such_dir > all.txt 2>&1
+
+# сокращение bash
+ls /tmp /no_such_dir &> all.txt
 ~~~
 
 ---
 
-## 5) QA-паттерны (копипаст)
-Последние SSH-события:
+## Пайпы
 ~~~bash
-sudo tail -n 200 /var/log/auth.log | grep -i ssh | tail -n 50
-~~~
-
-Stdout и stderr отдельно:
-~~~bash
-some_command > out.log 2> err.log
-~~~
-
-Оба потока в один файл:
-~~~bash
-some_command > all.log 2>&1
+cat /var/log/syslog | grep ssh | tail -n 20
+# stdout одной команды → stdin другой
 ~~~
 
 ---
 
-## 6) Мини-проверка (1 мин)
+## Базовые команды файловой системы
 ~~~bash
-( echo "OUT"; echo "ERR" >&2 ) > out.txt 2>&1
-cat out.txt
+pwd      # текущий каталог
+cd ..    # перейти в родительский каталог
+ls -lah  # содержимое каталога, включая скрытые
+echo "Hello" # вывод текста
+man ls   # справка
 ~~~
+
+---
+
+## QA-кейсы для практики
+~~~bash
+# Разделить stdout и stderr
+ls /tmp /no_such_dir > out.txt 2> err.txt
+
+# Объединить stdout+stderr
+ls /tmp /no_such_dir > all.txt 2>&1
+
+# Ошибки SSH
+sudo grep "Failed" /var/log/auth.log | tail -n 50 > failed_ssh.log
+~~~
+
+---
+
+## Мини-шпаргалка
+- Терминал → shell → процессы + потоки  
+- stdin/stdout/stderr — основа диагностики  
+- >, 2>, &>, | — ключ к логам и пайпам  
+- pwd, cd, ls, echo, man — базовые команды

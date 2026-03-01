@@ -2,60 +2,39 @@
 
 ---
 
-## 1.1 Почему Linux
-Linux — свободная ОС для серверов, VPS, CI/CD. Для QA: диагностика, контроль процессов.
-
----
-
-## 1.2 Shell vs GUI  
+## Shell
 ~~~bash
+whoami
+id
+pwd
+tty
 echo "$SHELL"
 echo "$0"
 ~~~
 
 ---
 
-## 1.3 Терминалы и сессии
+## Терминалы и сессии  
 ~~~bash
 who
 w
-tty
 ~~~
 
 ---
 
-## 1.4 Потоки: stdin/stdout/stderr
+## Переменные окружения
 ~~~bash
-echo "hello" > output.txt
-echo "error" 2> error.log  
-echo "both" &> both.log
+env | grep PATH
+printenv HOME
+echo "$PATH"
 ~~~
 
 ---
 
-## 1.5 Первые команды
+## Редиректы + пайпы
 ~~~bash
-pwd
-cd /home
-ls -lah
-echo "Hello Linux"
-man ls
-~~~
-
----
-
-## 1.6 История + Alias
-~~~bash
-history
-!!  
-alias ll='ls -lah'
-~~~
-
----
-
-## 1.7 Практический кейс QA
-~~~bash
-ssh dev@vps_ip
-env | grep HOME
-cat /var/log/syslog | grep ssh | tail -n 20
+cmd > out.txt
+cmd 2> err.txt
+cmd > all.txt 2>&1
+grep ssh /var/log/auth.log | tail -20
 ~~~
